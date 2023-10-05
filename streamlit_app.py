@@ -26,7 +26,7 @@ def process_data(df_all_original):
     df_2023.insert(loc=9, column='Currency', value='ZAR')
 
     df_2023 = df_2023[['Customer Name', 'Brand Name', 'Year', 'Month','Year/ Month','Medium Type','Vendor Name','NTC (LCY)','Market','Currency','Campaign Name']]
-    df_2023 = df_2023.dropna(0,subset=['Customer Name'])
+    df_2023 = df_2023.dropna(subset=['Customer Name'])
 
     df_2023['Year'] = df_2023['Year'].apply(lambda x:int(x))
 
