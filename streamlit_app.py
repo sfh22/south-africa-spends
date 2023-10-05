@@ -61,7 +61,7 @@ def main():
 
     if uploaded_all_file:
         # Read the uploaded files into Pandas DataFrames
-        df_all_original = pd.read_excel(uploaded_all_file)
+        df_all_original = pd.read_excel(uploaded_all_file, header = 4)
         df_all = df_all_original.copy()
 
         # Process the data
