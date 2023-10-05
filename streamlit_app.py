@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import datetime
+from datetime import datetime
 
 def process_data(df_all_original):
     df_2023 = df_all_original.copy()
