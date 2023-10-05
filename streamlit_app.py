@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import datetime
 
 def process_data(df_all_original):
     df_2023 = df_all_original.copy()
@@ -60,7 +61,7 @@ def main():
 
     if uploaded_all_file:
         # Read the uploaded files into Pandas DataFrames
-        df_all_original = pd.read_excel(uploaded_all_file, sheet_name="Pivotable")
+        df_all_original = pd.read_excel(uploaded_all_file)
         df_all = df_all_original.copy()
 
         # Process the data
