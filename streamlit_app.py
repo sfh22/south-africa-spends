@@ -1,57 +1,54 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from datetime import datetime
 
 def process_data(df_all_original):
     df_2023 = df_all_original.copy()
-    df_2023 = df_2023.drop(columns=['Unnamed: 0', 'Placement Code', 'Placement Date', 'Purchase Order Number','Invoice Number','Client Document Status',
-                                    'Publication Station','Placement Status','RateCard Unit Cost Gross Home',
-                                    'Commitment Disc Home Amount','Early Booking Disc Amount','Neg Disc Home Amount','Other Disc Home Amount',
-                                    'Added Val Disc Home Amount','Surcharge Home Amount','Effective Discount Home','Commission'])
-    dict = {'Placement Month': 'Month',
-            'Placement Year': 'Year',
-            'Client Name': 'Customer Name',
-            'Client Product Name':'Brand Name',
-            'Media Category Name':'Medium Type',
-            'Media Owner':'Vendor Name',
-            'NettHome':'NTC (LCY)'}
+    # Drop unnecessary columns
+    columns_to_drop = ['Unnamed: 0', 'Placement Code', 'Placement Date', 'Purchase Order Number', 'Invoice Number',
+                       'Client Document Status', 'Publication Station', 'Placement Status', 'RateCard Unit Cost Gross Home',
+                       'Commitment Disc Home Amount', 'Early Booking Disc Amount', 'Neg Disc Home Amount', 'Other Disc Home Amount',
+                       'Added Val Disc Home Amount', 'Surcharge Home Amount', 'Effective Discount Home', 'Commission']
+    df_2023 = df_2023.drop(columns=columns_to_drop)
 
-    df_2023.rename(columns=dict,
-            inplace=True)
+    # Rename columns
+    column_mapping = {
+        'Placement Month': 'Month',
+        'Placement Year': 'Year',
+        'Client Name': 'Customer Name',
+        'Client Product Name': 'Brand Name',
+        'Media Category Name': 'Medium Type',
+        'Media Owner': 'Vendor Name',
+        'NettHome': 'NTC (LCY)'
+    }
+    df_2023.rename(columns=column_mapping, inplace=True)
 
+    # Add columns
+    df_2023['Year/ Month'] = ''
+    df_2023['Market'] = 'RSA'
+    df_2023['Currency'] = 'ZAR'
 
-    df_2023.insert(loc=4, column='Year/ Month', value='')
-    df_2023.insert(loc=8, column='Market', value='RSA')
-    df_2023.insert(loc=9, column='Currency', value='ZAR')
+    # Reorder columns
+    df_2023 = df_2023[['Customer Name', 'Brand Name', 'Year', 'Month', 'Year/ Month', 'Medium Type', 'Vendor Name', 'NTC (LCY)', 'Market', 'Currency', 'Campaign Name']]
 
-    df_2023 = df_2023[['Customer Name', 'Brand Name', 'Year', 'Month','Year/ Month','Medium Type','Vendor Name','NTC (LCY)','Market','Currency','Campaign Name']]
+    # Drop rows with missing Customer Name
     df_2023 = df_2023.dropna(subset=['Customer Name'])
 
-    df_2023['Year'] = df_2023['Year'].apply(lambda x:int(x))
+    # Convert Year column to integer
+    df_2023['Year'] = df_2023['Year'].astype(int)
 
-    for index, row in df_2023.iterrows():
-        #print(row['Month'])
-        month_int = datetime.strptime(str(row['Month']), '%B').month
-        if int(month_int) < 10:
-            month_int = '0' + str(month_int)
-        
-        month_abbr = row['Month'][0:3]
-        
-        month_combined = str(row['Year']) + '-' + str(month_int) + ' (' + month_abbr + ')'
-        
-        df_2023['Year/ Month'][index] = month_combined
+    # Process Month column
+    df_2023['Month'] = df_2023['Month'].apply(lambda x: datetime.strptime(x, '%B').month)
+    df_2023['Month'] = df_2023['Month'].apply(lambda x: f'{x:02d}')  # Format month as zero-padded string
 
-    def extract_brand(t):
-        x = t.find("-")
-        if x != -1:
-            t = t.split('-')[0].rstrip()
-        return t
+    # Combine Year and Month columns
+    df_2023['Year/ Month'] = df_2023['Year'].astype(str) + '-' + df_2023['Month'].astype(str)
 
-    df_2023['Brand Name'] = df_2023['Brand Name'].apply(lambda x:extract_brand(x))
-    df_2023.loc[df_2023['Brand Name'] == 'CENTRUM 301000746' ,'Brand Name'] = 'CENTRUM'
+    # Extract Brand Name
+    df_2023['Brand Name'] = df_2023['Brand Name'].apply(lambda x: x.split('-')[0].strip())
+    df_2023.loc[df_2023['Brand Name'] == 'CENTRUM 301000746', 'Brand Name'] = 'CENTRUM'
 
-    return df_2023, 
+    return df_2023
 
 def main():
     st.title("South Africa Spends Data Processing App")
@@ -60,16 +57,15 @@ def main():
     uploaded_all_file = st.file_uploader("Upload South Africa Data File (Excel)", type=["xlsx"])
 
     if uploaded_all_file:
-        # Read the uploaded files into Pandas DataFrames
-        df_all_original = pd.read_excel(uploaded_all_file, header = 4)
-        df_all = df_all_original.copy()
+        # Read the uploaded file into a Pandas DataFrame
+        df_all_original = pd.read_excel(uploaded_all_file, header=4)
 
         # Process the data
-        df_all_processed = process_data(df_all)
+        df_all_processed = process_data(df_all_original)
 
         # Provide a download button for the processed data
-        st.markdown(f"### Download Processed Data")
-        st.download_button('Download file',data=pd.DataFrame.to_csv(df_all_processed,index=False), mime='text/csv')
+        st.markdown("### Download Processed Data")
+        st.download_button('Download file', data=df_all_processed.to_csv(index=False), mime='text/csv')
 
 if __name__ == "__main__":
     main()
